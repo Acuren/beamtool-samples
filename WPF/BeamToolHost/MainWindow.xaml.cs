@@ -1,19 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Forms.Integration;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using ESBeamTool;
 
 namespace BeamToolHost
@@ -29,24 +18,77 @@ namespace BeamToolHost
             DataContext = new MainWindowViewModel();
 
             theHost.PropertyMap.Add("ShowToolBar", new PropertyTranslator(OnShowToolBarChanged));
+            theHost.PropertyMap.Add("WorkspaceXml", new PropertyTranslator(OnWorkspaceXmlChanged));
+            theHost.PropertyMap.Add("WorkspaceFileInfo", new PropertyTranslator(OnWorkspaceFileInfoChanged));
+
         }
 
-        private void OkButtonClick(object sender, RoutedEventArgs e)
+        #region Code Behind Handlers
+        private void ShowToolsButtonClick(object sender, RoutedEventArgs e)
         {
             theHost.ShowToolBar = !theHost.ShowToolBar;
+        }
+
+        private async void OpenXmlWorkspaceButtonClick(object sender, RoutedEventArgs e)
+        {
+            using (StreamReader reader = new StreamReader("Sample.ebwk"))
+            {
+                string xml = await reader.ReadToEndAsync();
+                beamTool.WorkspaceOpen(xml);
+
+            }
+        }
+
+        private void OpenFileInfoWorkspaceButtonClick(object sender, RoutedEventArgs e)
+        {
+            FileInfo info = new FileInfo("Sample.ebwk");
+            beamTool.WorkspaceOpen(info);
+        }
+
+        private void GetWorkspaceXmlButtonClick(object sender, RoutedEventArgs e)
+        {
+            IWorkspace theSpace = beamTool.Workspace;
+            string xml = theSpace.WorkspaceXML;
 
         }
+
+        #endregion
+
+        #region Property Map Handlers
 
         private void OnShowToolBarChanged(object host, string propertyName, object value)
         {
             BeamToolWindowsFormsHost theHost = host as BeamToolWindowsFormsHost;
             BeamToolView beamToolView = theHost.Child as BeamToolView;
-            if(beamToolView != null)
+            if (beamToolView != null)
             {
                 beamToolView.ShowToolbar = theHost.ShowToolBar;
             }
-            
-            
+
+
         }
+
+        private void OnWorkspaceXmlChanged(object host, string propertyName, object workspaceXml)
+        {
+            BeamToolWindowsFormsHost theHost = host as BeamToolWindowsFormsHost;
+            BeamToolView beamToolView = theHost.Child as BeamToolView;
+            if (beamToolView != null)
+            {
+                beamToolView.WorkspaceOpen((string)workspaceXml);
+            }
+
+        }
+
+        private void OnWorkspaceFileInfoChanged(object host, string propertyName, object fileInfo)
+        {
+            BeamToolWindowsFormsHost theHost = host as BeamToolWindowsFormsHost;
+            BeamToolView beamToolView = theHost.Child as BeamToolView;
+            if (beamToolView != null)
+            {
+                beamToolView.WorkspaceOpen((FileInfo)fileInfo);
+            }
+
+        }
+        #endregion
     }
 }
